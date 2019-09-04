@@ -1,4 +1,4 @@
-# @nyurik/pgquery
+# tilelive-pgquery
 
 This [tilelive](https://github.com/mapbox/tilelive#readme) module runs a PostgreSQL query created by the
  [OpenMapTiles MVT tools](https://github.com/openmaptiles/openmaptiles-tools#generate-sql-code-to-create-mvt-tiles-directly-by-postgis),
