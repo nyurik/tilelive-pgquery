@@ -1,0 +1,32 @@
+{
+  "name": "tilelive-pgquery",
+  "version": "0.0.1",
+  "description": "PostgreSQL tilelive tile generator that runs an MVT-returning query",
+  "keywords": [
+    "postgres",
+    "tilelive",
+    "mvt"
+  ],
+  "main": "lib/PgQuery.js",
+  "scripts": {
+    "test": "mocha",
+    "preversion": "npm test"
+  },
+  "repository": "nyurik/tilelive-pgquery",
+  "author": "Yuri Astrakhan <YuriAstrakhan@gmail.com>",
+  "license": "Apache-2.0",
+  "bugs": "https://github.com/nyurik/tilelive-pgquery/issues",
+  "publishConfig": {
+    "access": "public"
+  },
+  "dependencies": {
+    "@kartotherian/input-validator": "^0.0.6",
+    "pg": "^7.12.1",
+    "typedarray-to-buffer": "^3.1.5"
+  },
+  "devDependencies": {
+    "mocha": "^6.2.0",
+    "eslint-config-airbnb-base": "^13.2.0",
+    "eslint-config-kartotherian": "^0.0.5"
+  }
+}
