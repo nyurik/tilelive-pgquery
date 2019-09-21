@@ -1,6 +1,6 @@
 const { describe, it, afterEach } = require('mocha');
 const assert = require('assert');
-const { promisify, callbackify } = require('util');
+const { promisify } = require('util');
 const fs = require('fs');
 const zlib = require('zlib');
 
@@ -33,9 +33,38 @@ describe('PostgreSQL Runner Tests', () => {
     QUERY = `SELECT '${dummyTile.toString()}'::bytea as v WHERE $1 >= 0 AND $2 >= 0 AND $3 >= 0`;
   }
 
-  newRunner = null;
+  const QUERY_ERR = `SELECT 0::bytea as v WHERE $1 >= 0 AND $2 >= 0 AND $3 >= 0`;
+
+  let newRunner = null;
 
   afterEach(() => cleanup);
+
+  async function cleanup() {
+    if (newRunner) {
+      await newRunner.shutdownAsync();
+      newRunner = null;
+    }
+  }
+
+  function newInstance(testOnStartup, query, prepareStatement) {
+    cleanup();
+    const creator = promisify((uri, callback) => new PgQuery(uri, callback));
+    let queryObj = {
+      database: POSTGRES_DB,
+      host: POSTGRES_HOST,
+      port: POSTGRES_PORT,
+      username: POSTGRES_USER,
+      password: POSTGRES_PASSWORD,
+      query: query || QUERY,
+    };
+    if (testOnStartup !== undefined) {
+      queryObj.testOnStartup = testOnStartup;
+    }
+    if (prepareStatement !== undefined) {
+      queryObj.prepareStatement = prepareStatement;
+    }
+    return creator({ query: queryObj });
+  }
 
   it('registers null source', () => {
     const tilelive = { protocols: {} };
@@ -46,30 +75,6 @@ describe('PostgreSQL Runner Tests', () => {
       },
     });
   });
-
-  async function cleanup() {
-    if (newRunner) {
-      await newRunner.shutdownAsync();
-      newRunner = null;
-    }
-  }
-
-  async function newInstance() {
-    cleanup();
-    const creator = promisify((uri, callback) => new PgQuery(uri, callback));
-    newRunner = await creator({
-      query: {
-        database: POSTGRES_DB,
-        host: POSTGRES_HOST,
-        port: POSTGRES_PORT,
-        username: POSTGRES_USER,
-        password: POSTGRES_PASSWORD,
-        query: QUERY,
-        testOnStartup: true,
-      },
-    });
-    return newRunner;
-  }
 
   it('getTile', async () => {
     const inst = await newInstance();
@@ -91,7 +96,7 @@ describe('PostgreSQL Runner Tests', () => {
     const inst = await newInstance();
 
     let test_invalid = (z, x, y) => new Promise((acc, rej) => {
-      inst.getTile(z, x, y, (err, data, headers) => {
+      inst.getTile(z, x, y, (err, data) => {
         if (err) {
           return acc();  // success
         }
@@ -104,6 +109,50 @@ describe('PostgreSQL Runner Tests', () => {
     await test_invalid(2, -1, 0);
   });
 
+  it('getTile should properly handle query errors', async () => {
+    const inst = await newInstance('', QUERY_ERR);
+
+    let test_invalid = (z, x, y) => new Promise((acc, rej) => {
+      inst.getTile(z, x, y, (err, data) => {
+        if (err) {
+          return acc();  // success
+        }
+        rej(new Error(`Query should have failed, but returned ${data} instead`));
+      });
+    });
+    await test_invalid(0, 0, 0);
+  });
+
+  it('properly handle query error on init', async () => {
+    function test_init_fail(uri) {
+      return new Promise((acc, rej) => {
+        new PgQuery(uri, (err) => {
+          if (err) {
+            acc();
+          } else {
+            rej(new Error(`Initialization should have failed`));
+          }
+        });
+      });
+    }
+
+    await test_init_fail();
+    await test_init_fail({});
+    await test_init_fail({ query: {} });
+    await test_init_fail({ query: {} });
+    await test_init_fail({
+      query: {
+        database: POSTGRES_DB,
+        host: POSTGRES_HOST,
+        port: POSTGRES_PORT,
+        username: POSTGRES_USER,
+        password: POSTGRES_PASSWORD,
+        query: QUERY_ERR,
+      }
+    });
+  });
+
+  // noinspection DuplicatedCode
   it('returns something for getInfo()', async () => {
     const inst = await newInstance();
     const getInfo = promisify(inst.getInfo);
@@ -117,6 +166,7 @@ describe('PostgreSQL Runner Tests', () => {
     assert.strictEqual(info.maxzoom, 14);
   });
 
+  // noinspection DuplicatedCode
   it('multi-client', async () => {
     const inst = await newInstance();
     const getInfo = promisify(inst.getInfo);
