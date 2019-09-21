@@ -1,6 +1,6 @@
 {
   "name": "tilelive-pgquery",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "PostgreSQL tilelive tile generator that runs an MVT-returning query",
   "keywords": [
     "postgres",
