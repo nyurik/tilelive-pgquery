@@ -12,8 +12,8 @@ This [tilelive](https://github.com/mapbox/tilelive#readme) module runs a Postgre
 * `maxpool` (integer) - size of the connection pool (default=10)
 * `minzoom` (zoom) - minimum allowed zoom (default=0)
 * `maxzoom` (zoom) - maximum allowed zoom (default=22)
-* `testOnStartup` (boolean) - attempt to get a simple zoom 10 tile on startup to verify connection (default=true). Set to an empty string to disable.
-* `prepareStatement` (boolean) - (defaults to `false` for funcZXY and query, `true` for `queryFile`). Use any non-empty value to enable, or empty value to disable.  
+* `testOnStartup` (boolean) - attempt to get a simple zoom 10 tile on startup to verify connection (default=true).
+* `prepareStatement` (boolean) - use prepared statements (defaults to `false` for funcZXY and query, `true` for `queryFile`).  
 
 Exactly one of the following 3 parameters must be given.
 * `funcZXY` (string) - name of the MVT function that accepts the Z,X,Y int parameters and returns a single binary MVT value (one row with a single column), or nothing if empty. 
