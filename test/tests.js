@@ -22,6 +22,7 @@ describe('PostgreSQL Runner Tests', () => {
   const POSTGRES_DB = process.env.POSTGRES_DB || 'openmaptiles';
   const POSTGRES_HOST = process.env.POSTGRES_HOST || 'localhost';
   const POSTGRES_PORT = process.env.POSTGRES_PORT || '5432';
+  const POSTGRES_PORT2 = process.env.POSTGRES_PORT2 || '5433';
   const POSTGRES_USER = process.env.POSTGRES_USER || 'openmaptiles';
   const POSTGRES_PASSWORD = process.env.POSTGRES_PASSWORD || 'openmaptiles';
 
@@ -46,24 +47,23 @@ describe('PostgreSQL Runner Tests', () => {
     }
   }
 
-  function newInstance(testOnStartup, query, prepareStatement) {
+  function newInstance(query, ...extraParams) {
     cleanup();
     const creator = promisify((uri, callback) => new PgQuery(uri, callback));
-    let queryObj = {
+    const queryObj = new URLSearchParams({
       database: POSTGRES_DB,
       host: POSTGRES_HOST,
       port: POSTGRES_PORT,
       username: POSTGRES_USER,
       password: POSTGRES_PASSWORD,
       query: query || QUERY,
-    };
-    if (testOnStartup !== undefined) {
-      queryObj.testOnStartup = testOnStartup;
+    });
+    if (extraParams) {
+      for (const v of extraParams) {
+        queryObj.append(v[0], v[1])
+      }
     }
-    if (prepareStatement !== undefined) {
-      queryObj.prepareStatement = prepareStatement;
-    }
-    return creator({ query: queryObj });
+    return creator(`pgquery://?${queryObj}`);
   }
 
   it('registers null source', () => {
@@ -110,7 +110,7 @@ describe('PostgreSQL Runner Tests', () => {
   });
 
   it('getTile should properly handle query errors', async () => {
-    const inst = await newInstance('', QUERY_ERR);
+    const inst = await newInstance(QUERY_ERR, ['testOnStartup', '']);
 
     let test_invalid = (z, x, y) => new Promise((acc, rej) => {
       inst.getTile(z, x, y, (err, data) => {
@@ -168,15 +168,9 @@ describe('PostgreSQL Runner Tests', () => {
 
   // noinspection DuplicatedCode
   it('multi-client', async () => {
-    const inst = await newInstance();
-    const getInfo = promisify(inst.getInfo);
+    const inst = await newInstance(false,
+      ['host', POSTGRES_HOST], ['port', POSTGRES_PORT2]);
 
-    const info = await getInfo.apply(inst);
-    assert(info);
-    assert.strictEqual(info.tilejson, '2.1.0');
-    assert(info.name.startsWith('PgQuery '));
-    assert.deepStrictEqual(info.bounds, [-180, -85.0511, 180, 85.0511]);
-    assert.strictEqual(info.minzoom, 0);
-    assert.strictEqual(info.maxzoom, 14);
+    // FIXME: TODO proper testing for multiple connections
   });
 });

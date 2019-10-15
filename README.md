@@ -7,8 +7,8 @@ This [tilelive](https://github.com/mapbox/tilelive#readme) module runs a Postgre
 ### Parameters
 
 * `database` (string, required) - PostgreSQL database name
-* `host` (string, required) - PostgreSQL host
-* `port` (integer) - PostgreSQL port
+* `host` (string, required) - PostgreSQL host. Could be used multiple times for load balancing.
+* `port` (integer) - PostgreSQL port. Could be used multiple times for load balancing. If given, must be used once or the same number of times as there are hosts. 
 * `maxpool` (integer) - size of the connection pool (default=10)
 * `minzoom` (zoom) - minimum allowed zoom (default=0)
 * `maxzoom` (zoom) - maximum allowed zoom (default=22)
@@ -24,7 +24,10 @@ Exactly one of the following 3 parameters must be given.
 At this point testing requires a local PostgreSQL service, even if it is empty and runs inside a docker container:
 
 ```bash
-docker run --rm --name pg-docker -e POSTGRES_PASSWORD=openmaptiles -e POSTGRES_USER=openmaptiles -e POSTGRES_DB=openmaptiles -p 5432:5432 postgres
+docker run -it --rm --name pg-docker -e POSTGRES_PASSWORD=openmaptiles -e POSTGRES_USER=openmaptiles -e POSTGRES_DB=openmaptiles -p 5432:5432 postgres
+
+# For multi-host test, run another instance on a different port
+docker run -it --rm --name pg-docker2 -e POSTGRES_PASSWORD=openmaptiles -e POSTGRES_USER=openmaptiles -e POSTGRES_DB=openmaptiles -p 5433:5432 postgres
 ```
 
 Run tests in a separate shell using `npm run test`

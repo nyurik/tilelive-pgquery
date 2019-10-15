@@ -1,6 +1,6 @@
 {
   "name": "tilelive-pgquery",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "PostgreSQL tilelive tile generator that runs an MVT-returning query",
   "keywords": [
     "postgres",
@@ -9,7 +9,7 @@
   ],
   "main": "lib/PgQuery.js",
   "scripts": {
-    "test": "mocha",
+    "test": "mocha --exit",
     "preversion": "npm test"
   },
   "repository": "nyurik/tilelive-pgquery",
