@@ -1,7 +1,7 @@
 {
   "name": "tilelive-pgquery",
-  "version": "0.2.0",
-  "description": "PostgreSQL tilelive tile generator that runs an MVT-returning query",
+  "version": "0.2.1",
+  "description": "PostgreSQL tilelive tile generator that runs an MVT-returning query and can load-balance between multiple PG servers",
   "keywords": [
     "postgres",
     "tilelive",
@@ -25,7 +25,7 @@
     "typedarray-to-buffer": "^3.1.5"
   },
   "devDependencies": {
-    "mocha": "^6.2.0",
+    "mocha": "^6.2.1",
     "eslint-config-airbnb-base": "^13.2.0",
     "eslint-config-kartotherian": "^0.0.5"
   }

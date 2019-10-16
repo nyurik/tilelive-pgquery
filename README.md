@@ -3,13 +3,15 @@
 This [tilelive](https://github.com/mapbox/tilelive#readme) module runs a PostgreSQL query created by the
  [OpenMapTiles MVT tools](https://github.com/openmaptiles/openmaptiles-tools#generate-sql-code-to-create-mvt-tiles-directly-by-postgis),
  and returns the MVT binary blob from the query results.
+ 
+This module can connect to more than one postgreSQL server and load-balance requests based on the number of pending queries, weighted by the maxpool param.
 
 ### Parameters
 
 * `database` (string, required) - PostgreSQL database name
 * `host` (string, required) - PostgreSQL host. Could be used multiple times for load balancing.
 * `port` (integer) - PostgreSQL port. Could be used multiple times for load balancing. If given, must be used once or the same number of times as there are hosts. 
-* `maxpool` (integer) - size of the connection pool (default=10)
+* `maxpool` (integer) - size of the connection pool (default=10). If given, must be used once or the same number of times as there are hosts.
 * `minzoom` (zoom) - minimum allowed zoom (default=0)
 * `maxzoom` (zoom) - maximum allowed zoom (default=22)
 * `testOnStartup` (boolean) - attempt to get a simple zoom 10 tile on startup to verify connection (default=true).
