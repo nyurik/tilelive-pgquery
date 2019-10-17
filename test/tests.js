@@ -173,4 +173,9 @@ describe('PostgreSQL Runner Tests', () => {
 
     // FIXME: TODO proper testing for multiple connections
   });
+
+  it('resolveDns', async () => {
+    await newInstance(false, ['resolveDns', true]);
+  });
+
 });
