@@ -18,6 +18,7 @@ This module can connect to more than one postgreSQL server and load-balance requ
 * `serverInfo` (boolean) - if non-empty or not given, prints PostgreSQL & PostGIS version data and key metrics. To disable, set to an empty value.
 * `prepareStatement` (boolean) - use prepared statements (defaults to `false` for funcZXY and query, `true` for `queryFile`).
 * `resolveDns` (boolean) - convert host value(s) to corresponding IPs on startup. If DNS resolves to multiple IPs, all IPs will be used in a pool.
+* `errorsAsEmpty` (boolean) - if set, treats all query errors as empty tiles, returning standard `Tile does not exist` error. 
 
 Exactly one of the following 3 parameters must be given.
 * `funcZXY` (string) - name of the MVT function that accepts the Z,X,Y int parameters and returns a single binary MVT value (one row with a single column), or nothing if empty.
