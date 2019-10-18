@@ -15,7 +15,7 @@ This module can connect to more than one postgreSQL server and load-balance requ
 * `minzoom` (zoom) - minimum allowed zoom (default=0)
 * `maxzoom` (zoom) - maximum allowed zoom (default=22)
 * `testOnStartup` (tile index) - set which tile (in z/x/y or z,x,y format) to get on startup to verify database connection.  To disable, set to an empty value. By default uses a simple tile in Norway on zoom 10.
-* `versionInfo` (boolean) - if non-empty or not given, prints PostgreSQL & PostGIS version data. To disable, set to an empty value.
+* `serverInfo` (boolean) - if non-empty or not given, prints PostgreSQL & PostGIS version data and key metrics. To disable, set to an empty value.
 * `prepareStatement` (boolean) - use prepared statements (defaults to `false` for funcZXY and query, `true` for `queryFile`).
 * `resolveDns` (boolean) - convert host value(s) to corresponding IPs on startup. If DNS resolves to multiple IPs, all IPs will be used in a pool.
 
