@@ -2,6 +2,7 @@ test/
 
 
 .idea/
+*.iml
 
 # Logs
 logs
