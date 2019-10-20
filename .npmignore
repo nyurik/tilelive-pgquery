@@ -1,5 +1,8 @@
 test/
+.eslintrc.js
 
+
+# Same as .gitignore
 
 .idea/
 *.iml
