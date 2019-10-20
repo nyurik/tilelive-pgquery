@@ -178,4 +178,8 @@ describe('PostgreSQL Runner Tests', () => {
     await newInstance(false, ['resolveDns', true]);
   });
 
+  it('initQuery', async () => {
+    await newInstance(false, ['initQuery', "SELECT 'CURRENT DB = ' || current_database();"]);
+  });
+
 });
