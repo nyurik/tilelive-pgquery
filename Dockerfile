@@ -8,6 +8,7 @@ RUN apt-get update \
         sqlite3 \
         libsqlite3-dev \
         postgresql-client \
+        sqlite3 \
     && rm -rf /var/lib/apt/lists/
 
 RUN npm config set unsafe-perm true \
