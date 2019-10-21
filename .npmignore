@@ -1,6 +1,6 @@
 test/
 .eslintrc.js
-
+Dockerfile
 
 # Same as .gitignore
 
