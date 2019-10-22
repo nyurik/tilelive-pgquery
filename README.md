@@ -8,9 +8,11 @@ This module can connect to more than one postgreSQL server and load-balance requ
 
 ### Parameters
 
-* `database` (string, required) - PostgreSQL database name
-* `host` (string, required) - PostgreSQL host. Could be used multiple times for load balancing.
-* `port` (integer) - PostgreSQL port. Could be used multiple times for load balancing. If given, must be used once or the same number of times as there are hosts.
+* `database` (string, required) - PostgreSQL database name. Uses `PGDATABASE` env var if not set.
+* `host` (string, required) - PostgreSQL host. Could be used multiple times for load balancing.  Uses `PGHOST` env var if not set.
+* `port` (integer) - PostgreSQL port. Could be used multiple times for load balancing. If given, must be used once or the same number of times as there are hosts.  Uses `PGPORT` env var if not set.
+* `username` (string) - PostgreSQL username. Uses `PGUSER` env var if not set.
+* `password` (string) - PostgreSQL password. Uses `PGPASSWORD` env var if not set.
 * `maxpool` (integer) - size of the connection pool (default=10). If given, must be used once or the same number of times as there are hosts.
 * `minzoom` (zoom) - minimum allowed zoom (default=0)
 * `maxzoom` (zoom) - maximum allowed zoom (default=22)
