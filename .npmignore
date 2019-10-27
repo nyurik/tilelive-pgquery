@@ -1,6 +1,7 @@
 test/
 .eslintrc.js
 Dockerfile
+.gitignore
 
 # Same as .gitignore
 
