@@ -22,6 +22,7 @@ This module can connect to more than one postgreSQL server and load-balance requ
 * `resolveDns` (boolean) - convert host value(s) to corresponding IPs on startup. If DNS resolves to multiple IPs, all IPs will be used in a pool.
 * `errorsAsEmpty` (boolean) - if set, treats all query errors as empty tiles, returning standard `Tile does not exist` error. 
 * `connectionInitQuery` (string) - if set, run this query each time a new connection is made to a server.
+* `name` (string) - if set, adds this name to the metadata's name field
 
 Exactly one of the following 3 parameters must be given.
 * `funcZXY` (string) - name of the MVT function that accepts the Z,X,Y int parameters and returns a single binary MVT value (one row with a single column), or nothing if empty.
