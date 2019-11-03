@@ -14,6 +14,6 @@ RUN npm config set unsafe-perm true \
     && npm install -g \
       @mapbox/tilelive@6.0.0 \
       @mapbox/mbtiles@0.11.0 \
-      tilelive-pgquery@0.4.0
+      tilelive-pgquery@0.5.0
 
 ENTRYPOINT ["tilelive-copy"]
