@@ -2,9 +2,13 @@
 
 This [tilelive](https://github.com/mapbox/tilelive#readme) module runs a PostgreSQL query created by the
  [OpenMapTiles MVT tools](https://github.com/openmaptiles/openmaptiles-tools#generate-sql-code-to-create-mvt-tiles-directly-by-postgis),
- and returns the MVT binary blob from the query results.
+ and returns the data blob from the query results.
 
 This module can connect to more than one postgreSQL server and load-balance requests based on the number of pending queries, weighted by the maxpool param.
+
+This module expects either a parametrized query, or the name of a PostgreSQL function with three parameters: `z, x, y`. The result is expected to be zero or one row,
+with the first column being the tile data blob. If the `key` parameter is set, the second column must be the hash of the content. If the result blob is empty,
+or there are no rows, pgquery raises the standard "no-tile" error. 
 
 ### Parameters
 
@@ -24,14 +28,17 @@ This module can connect to more than one postgreSQL server and load-balance requ
 * `connectionInitQuery` (string) - if set, run this query each time a new connection is made to a server.
 * `name` (string) - if set, adds this name to the metadata's name field
 * `key` (boolean) - if set, assumes the second query result column is a key that should be attached to the result buffer.
+* `nogzip` (boolean) - do not compress data blob (use this if the query returns compressed data or an image) 
+* `contentType` (string) - set `content-type` header. Uses `application/x-protobuf` by default.
+* `contentEncoding` (string) - set `content-encoding` header. Uses `gzip` by default.
 
 Exactly one of the following 3 parameters must be given.
-* `funcZXY` (string) - name of the MVT function that accepts the Z,X,Y int parameters and returns a single binary MVT value (one row with a single column), or nothing if empty.
-* `query` (string) - an SQL statement that uses `$1, $2, $3` for Z,X,Y, and returns an MVT tile.
-* `queryFile` (string) - filename of a file that contains the query.
+* `funcZXY` (string) - name of the function that accepts the `Z, X, Y` int parameters.
+* `query` (string) - an SQL statement that uses `$1, $2, $3` parameters for `Z, X, Y`.
+* `queryFile` (string) - filename of a file that contains the query with `$1, $2, $3` parameters for `Z, X, Y`.
 
 ### Testing
-At this point testing requires a local PostgreSQL service, even if it is empty and runs inside a docker container:
+Testing requires a local PostgreSQL service, even if it is empty and runs inside a docker container:
 
 ```bash
 docker run -it --rm --name pg-docker -e POSTGRES_PASSWORD=openmaptiles -e POSTGRES_USER=openmaptiles -e POSTGRES_DB=openmaptiles -p 5432:5432 postgres

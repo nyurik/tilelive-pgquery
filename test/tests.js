@@ -10,15 +10,8 @@ const PgQuery = require('../lib/PgQuery');
  * This test will attempt to connect to the PostgreSQL instance running on the localhost.
  */
 describe('PostgreSQL Runner Tests', () => {
-  const expectedHeaders = {
-    'Content-Type': 'application/x-protobuf',
-    'Content-Encoding': 'gzip',
-  };
-
   const zxy = [8, 10, 23];
   const dummyTile = Buffer.from(zxy.join(''));
-  const gzipedDummyTile = zlib.gzipSync(dummyTile);
-
   const POSTGRES_DB = process.env.POSTGRES_DB || 'openmaptiles';
   const POSTGRES_HOST = process.env.POSTGRES_HOST || 'localhost';
   const POSTGRES_PORT = process.env.POSTGRES_PORT || '5432';
@@ -27,15 +20,9 @@ describe('PostgreSQL Runner Tests', () => {
   const POSTGRES_PASSWORD = process.env.POSTGRES_PASSWORD || 'openmaptiles';
 
   const MD5 = 'a8372432b76f55afb7c8b2e820137b30';
-  let QUERY, QUERY_KEY;
-  const isCustomQuery = !!process.env.POSTGRES_QUERY_FILE;
-  if (isCustomQuery) {
-    QUERY = fs.readFileSync(process.env.POSTGRES_QUERY_FILE, { encoding: 'utf8' });
-  } else {
-    QUERY = `SELECT '${dummyTile.toString()}'::bytea as v WHERE $1 >= 0 AND $2 >= 0 AND $3 >= 0`;
-    QUERY_KEY = `SELECT '${dummyTile.toString()}'::bytea as v, '${MD5}' as k WHERE $1 >= 0 AND $2 >= 0 AND $3 >= 0`;
-  }
-
+  const QUERY = `SELECT '${dummyTile.toString()}'::bytea as v WHERE $1 >= 0 AND $2 >= 0 AND $3 >= 0`;
+  const QUERY_TEXT = `SELECT '${dummyTile.toString()}'::text as v WHERE $1 >= 0 AND $2 >= 0 AND $3 >= 0`;
+  const QUERY_KEY = `SELECT '${dummyTile.toString()}'::bytea as v, '${MD5}' as k WHERE $1 >= 0 AND $2 >= 0 AND $3 >= 0`;
   const QUERY_ERR = `SELECT 0::bytea as v WHERE $1 >= 0 AND $2 >= 0 AND $3 >= 0`;
 
   let newRunner = null;
@@ -86,9 +73,50 @@ describe('PostgreSQL Runner Tests', () => {
         if (err) {
           return rej(err);
         }
-        assert.strictEqual(data instanceof Buffer, true, 'tile is a Buffer');
-        assert.deepStrictEqual(data, isCustomQuery ? headers : gzipedDummyTile);
-        assert.deepStrictEqual(headers, expectedHeaders);
+        assert.strictEqual(data.constructor.name, 'Buffer');
+        assert.deepStrictEqual(data, zlib.gzipSync(dummyTile));
+        assert.deepStrictEqual(headers, {
+          'Content-Type': 'application/x-protobuf',
+          'Content-Encoding': 'gzip',
+        });
+        acc();
+      });
+    });
+  });
+
+  it('getTile nogzip', async () => {
+    const inst = await newInstance(QUERY,['nogzip', '1']);
+
+    return new Promise((acc, rej) => {
+        inst.getTile(...zxy, (err, data, headers) => {
+        if (err) {
+          return rej(err);
+        }
+        assert.strictEqual(data.constructor.name, 'Buffer');
+        assert.deepStrictEqual(data, dummyTile);
+        assert.deepStrictEqual(headers, {
+          'Content-Type': 'application/x-protobuf',
+          'Content-Encoding': 'gzip',
+        });
+        acc();
+      });
+    });
+  });
+
+  it('custom headers', async () => {
+    const inst = await newInstance(QUERY,['contentType', 'mycontent'], ['contentEncoding', 'myencoding']);
+
+    return new Promise((acc, rej) => {
+      inst.getTile(...zxy, (err, data, headers) => {
+        if (err) {
+          return rej(err);
+        }
+        assert.strictEqual(data.constructor.name, 'Buffer');
+        assert.deepStrictEqual(data, zlib.gzipSync(dummyTile));
+        assert.deepStrictEqual(headers, {
+          'Content-Type': 'mycontent',
+          'Content-Encoding': 'myencoding',
+        });
         acc();
       });
     });
@@ -102,15 +130,14 @@ describe('PostgreSQL Runner Tests', () => {
         if (err) {
           return rej(err);
         }
-        assert.strictEqual(data instanceof Buffer, true, 'tile is a Buffer');
-        if (isCustomQuery) {
-          assert.deepStrictEqual(data, headers);
-        } else {
-          const expected = zlib.gzipSync(dummyTile);
-          expected.key = MD5;
-          assert.deepStrictEqual(data, expected);
-        }
-        assert.deepStrictEqual(headers, expectedHeaders);
+        assert.strictEqual(data.constructor.name, 'Buffer');
+        const expected = zlib.gzipSync(dummyTile);
+        expected.key = MD5;
+        assert.deepStrictEqual(data, expected);
+        assert.deepStrictEqual(headers, {
+          'Content-Type': 'application/x-protobuf',
+          'Content-Encoding': 'gzip',
+        });
         acc();
       });
     });
