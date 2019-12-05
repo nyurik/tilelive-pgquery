@@ -12,4 +12,4 @@ RUN curl -sL https://deb.nodesource.com/setup_12.x | bash - \
       @mapbox/mbtiles@0.11.0 \
       tilelive-pgquery@0.5.0
 
-ENTRYPOINT ["tilelive-copy"]
+CMD tilelive-copy
