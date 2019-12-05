@@ -1,4 +1,10 @@
 # tilelive-pgquery
+[![](https://img.shields.io/npm/dm/tilelive-pgquery?label=NPM)](https://www.npmjs.com/package/tilelive-pgquery)
+[![](https://img.shields.io/docker/cloud/build/nyurik/tilelive-pgquery?label=Docker)](https://hub.docker.com/r/nyurik/tilelive-pgquery)
+[![](https://img.shields.io/microbadger/layers/nyurik/tilelive-pgquery?label=Docker%20layers)](https://hub.docker.com/r/nyurik/tilelive-pgquery)
+[![](https://img.shields.io/microbadger/image-size/nyurik/tilelive-pgquery?label=Docker%20size)](https://hub.docker.com/r/nyurik/tilelive-pgquery)
+[![](https://img.shields.io/docker/pulls/nyurik/tilelive-pgquery?label=Docker%20downloads)](https://hub.docker.com/r/nyurik/tilelive-pgquery)
+[![](https://img.shields.io/docker/stars/nyurik/tilelive-pgquery?label=Docker%20stars)](https://hub.docker.com/r/nyurik/tilelive-pgquery)
 
 This [tilelive](https://github.com/mapbox/tilelive#readme) module runs a PostgreSQL query created by the
  [OpenMapTiles MVT tools](https://github.com/openmaptiles/openmaptiles-tools#generate-sql-code-to-create-mvt-tiles-directly-by-postgis),
