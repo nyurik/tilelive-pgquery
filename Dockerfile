@@ -10,6 +10,6 @@ RUN curl -sL https://deb.nodesource.com/setup_12.x | bash - \
     && npm install -g \
       @mapbox/tilelive@6.0.0 \
       @mapbox/mbtiles@0.11.0 \
-      tilelive-pgquery@0.5.0
+      tilelive-pgquery@0.6.1
 
 CMD tilelive-copy
