@@ -1,7 +1,6 @@
 const { describe, it, afterEach } = require('mocha');
 const assert = require('assert');
 const { promisify } = require('util');
-const fs = require('fs');
 const zlib = require('zlib');
 
 const PgQuery = require('../lib/PgQuery');
@@ -12,12 +11,12 @@ const PgQuery = require('../lib/PgQuery');
 describe('PostgreSQL Runner Tests', () => {
   const zxy = [8, 10, 23];
   const dummyTile = Buffer.from(zxy.join(''));
-  const POSTGRES_DB = process.env.POSTGRES_DB || 'openmaptiles';
-  const POSTGRES_HOST = process.env.POSTGRES_HOST || 'localhost';
-  const POSTGRES_PORT = process.env.POSTGRES_PORT || '5432';
-  const POSTGRES_PORT2 = process.env.POSTGRES_PORT2 || '5433';
-  const POSTGRES_USER = process.env.POSTGRES_USER || 'openmaptiles';
-  const POSTGRES_PASSWORD = process.env.POSTGRES_PASSWORD || 'openmaptiles';
+  const PGDATABASE = process.env.PGDATABASE || 'openmaptiles';
+  const PGHOST = process.env.PGHOST || 'localhost';
+  const PGPORT = process.env.PGPORT || '5432';
+  const PGPORT2 = process.env.PGPORT2 || '5433';
+  const PGUSER = process.env.PGUSER || 'openmaptiles';
+  const PGPASSWORD = process.env.PGPASSWORD || 'openmaptiles';
 
   const MD5 = 'a8372432b76f55afb7c8b2e820137b30';
   const QUERY = `SELECT '${dummyTile.toString()}'::bytea as v WHERE $1 >= 0 AND $2 >= 0 AND $3 >= 0`;
@@ -40,11 +39,11 @@ describe('PostgreSQL Runner Tests', () => {
     cleanup();
     const creator = promisify((uri, callback) => new PgQuery(uri, callback));
     const queryObj = new URLSearchParams({
-      database: POSTGRES_DB,
-      host: POSTGRES_HOST,
-      port: POSTGRES_PORT,
-      username: POSTGRES_USER,
-      password: POSTGRES_PASSWORD,
+      database: PGDATABASE,
+      host: PGHOST,
+      port: PGPORT,
+      username: PGUSER,
+      password: PGPASSWORD,
       query: query || QUERY,
     });
     if (extraParams) {
@@ -193,11 +192,11 @@ describe('PostgreSQL Runner Tests', () => {
     await test_init_fail({ query: {} });
     await test_init_fail({
       query: {
-        database: POSTGRES_DB,
-        host: POSTGRES_HOST,
-        port: POSTGRES_PORT,
-        username: POSTGRES_USER,
-        password: POSTGRES_PASSWORD,
+        database: PGDATABASE,
+        host: PGHOST,
+        port: PGPORT,
+        username: PGUSER,
+        password: PGPASSWORD,
         query: QUERY_ERR,
       }
     });
@@ -220,7 +219,7 @@ describe('PostgreSQL Runner Tests', () => {
   // noinspection DuplicatedCode
   it('multi-client', async () => {
     const inst = await newInstance(false,
-      ['host', POSTGRES_HOST], ['port', POSTGRES_PORT2]);
+      ['host', PGHOST], ['port', PGPORT2]);
 
     // FIXME: TODO proper testing for multiple connections
   });

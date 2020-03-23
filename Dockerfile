@@ -1,4 +1,4 @@
-FROM openmaptiles/openmaptiles-tools:latest
+FROM openmaptiles/openmaptiles-tools:build-6.0-dev
 MAINTAINER Yuri Astrakhan <YuriAstrakhan@gmail.com>
 
 WORKDIR /usr/src/app
@@ -8,8 +8,8 @@ RUN curl -sL https://deb.nodesource.com/setup_12.x | bash - \
     && rm -rf /var/lib/apt/lists/ \
     && npm config set unsafe-perm true \
     && npm install -g \
-      @mapbox/tilelive@6.0.0 \
+      @mapbox/tilelive@6.1.0 \
       @mapbox/mbtiles@0.11.0 \
-      tilelive-pgquery@0.6.1
+      tilelive-pgquery@0.6.2
 
 CMD tilelive-copy
