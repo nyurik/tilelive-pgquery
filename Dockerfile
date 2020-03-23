@@ -1,15 +1,18 @@
 FROM openmaptiles/openmaptiles-tools:build-6.0-dev
-MAINTAINER Yuri Astrakhan <YuriAstrakhan@gmail.com>
+LABEL maintainer="Yuri Astrakhan <YuriAstrakhan@gmail.com>"
 
 WORKDIR /usr/src/app
 
-RUN curl -sL https://deb.nodesource.com/setup_12.x | bash - \
-    && apt-get install -y nodejs \
-    && rm -rf /var/lib/apt/lists/ \
-    && npm config set unsafe-perm true \
-    && npm install -g \
+RUN set -eux  ;\
+    curl -sL https://deb.nodesource.com/setup_12.x | bash -  ;\
+    DEBIAN_FRONTEND=noninteractive apt-get update  ;\
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends  \
+        nodejs  ;\
+    rm -rf /var/lib/apt/lists/  ;\
+    npm config set unsafe-perm true  ;\
+    npm install -g \
       @mapbox/tilelive@6.1.0 \
       @mapbox/mbtiles@0.11.0 \
-      tilelive-pgquery@0.6.2
+      tilelive-pgquery@0.7.0
 
 CMD tilelive-copy
