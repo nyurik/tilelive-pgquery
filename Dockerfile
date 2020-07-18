@@ -13,6 +13,6 @@ RUN set -eux  ;\
     npm install -g \
       @mapbox/tilelive@6.1.0 \
       @mapbox/mbtiles@0.11.0 \
-      tilelive-pgquery@0.7.0
+      tilelive-pgquery@0.7.1
 
 CMD tilelive-copy
