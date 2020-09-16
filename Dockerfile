@@ -1,4 +1,4 @@
-FROM openmaptiles/openmaptiles-tools:build-6.0-dev
+FROM openmaptiles/openmaptiles-tools:latest
 LABEL maintainer="Yuri Astrakhan <YuriAstrakhan@gmail.com>"
 
 WORKDIR /usr/src/app
@@ -13,6 +13,6 @@ RUN set -eux  ;\
     npm install -g \
       @mapbox/tilelive@6.1.0 \
       @mapbox/mbtiles@0.11.0 \
-      tilelive-pgquery@0.7.1
+      tilelive-pgquery@0.7.2
 
 CMD tilelive-copy
