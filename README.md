@@ -53,4 +53,4 @@ docker run -it --rm --name pg-docker -e POSTGRES_PASSWORD=openmaptiles -e POSTGR
 docker run -it --rm --name pg-docker2 -e POSTGRES_PASSWORD=openmaptiles -e POSTGRES_USER=openmaptiles -e POSTGRES_DB=openmaptiles -p 5433:5432 postgres
 ```
 
-Run tests in a separate shell using `npm run test`
+Run tests in a separate shell using `yarn run test`
