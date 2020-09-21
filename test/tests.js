@@ -232,4 +232,16 @@ describe('PostgreSQL Runner Tests', () => {
     await newInstance(false, ['initQuery', "SELECT 'CURRENT DB = ' || current_database();"]);
   });
 
+  it('parseTestOnStartup', async () => {
+    const inst = await newInstance(false, ['testOnStartup', '']);
+    assert.deepStrictEqual([14, 9268, 3575], inst.parseTestOnStartup(undefined));
+    assert.deepStrictEqual(false, inst.parseTestOnStartup(''));
+    assert.deepStrictEqual(false, inst.parseTestOnStartup('false'));
+    assert.deepStrictEqual(false, inst.parseTestOnStartup('0'));
+    assert.deepStrictEqual([0,0,0], inst.parseTestOnStartup('0,0,0'));
+    assert.deepStrictEqual([0,0,0], inst.parseTestOnStartup('0/0/0'));
+    assert.deepStrictEqual([3,2,1], inst.parseTestOnStartup('3,2,1'));
+    assert.deepStrictEqual([3,2,1], inst.parseTestOnStartup('3/2/1'));
+  });
+
 });
