@@ -23,7 +23,7 @@ or there are no rows, pgquery raises the standard "no-tile" error.
 * `port` (integer) - PostgreSQL port. Could be used multiple times for load balancing. If given, must be used once or the same number of times as there are hosts.  Uses `PGPORT` env var if not set.
 * `username` (string) - PostgreSQL username. Uses `PGUSER` env var if not set.
 * `password` (string) - PostgreSQL password. Uses `PGPASSWORD` env var if not set.
-* `maxpool` (integer) - size of the connection pool (default=10). If given, must be used once or the same number of times as there are hosts.
+* `maxpool` (integer) - size of the per-server connection pool (default=10). If given, must be used once or the same number of times as there are hosts.
 * `minzoom` (zoom) - minimum allowed zoom (default=0)
 * `maxzoom` (zoom) - maximum allowed zoom (default=22)
 * `testOnStartup` (tile index) - set which tile (in z/x/y or z,x,y format) to get on startup to verify database connection.  To disable, set to an empty value. By default uses a simple tile in Norway on zoom 10.
