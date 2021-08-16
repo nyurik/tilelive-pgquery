@@ -4,6 +4,14 @@ module.exports = {
     node: 1,
   },
   globals: {
-    exampleGlobalVariable: true
+    exampleGlobalVariable: true,
+  },
+  rules: {
+    'prefer-destructuring': ['error', {
+      AssignmentExpression: {
+        array: false,
+        object: false,
+      },
+    }],
   },
 };

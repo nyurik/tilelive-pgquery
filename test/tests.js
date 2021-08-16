@@ -4,13 +4,28 @@ const { promisify } = require('util');
 const zlib = require('zlib');
 
 const PgQuery = require('../lib/PgQuery');
+const { Client } = require('pg');
 
 /**
  * This test will attempt to connect to the PostgreSQL instance running on the localhost.
  */
 describe('PostgreSQL Runner Tests', () => {
   const zxy = [8, 10, 23];
-  const dummyTile = Buffer.from(zxy.join(''));
+  const MD5 = 'a8372432b76f55afb7c8b2e820137b30';
+
+  const vTile = Buffer.from([0x1A].concat(zxy));
+  const vTileGz = zlib.gzipSync(vTile);
+  const vTileGzKey = zlib.gzipSync(vTile);
+  vTileGzKey.key = MD5;
+
+  const jpgTile = Buffer.from([0xff, 0xd8, 0xff].concat(zxy));
+  const jpgTileKey = Buffer.from(jpgTile);
+  jpgTileKey.key = MD5;
+
+  const pngTile = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a].concat(zxy));
+  const pngTileKey = Buffer.from(pngTile);
+  pngTileKey.key = MD5;
+
   const PGDATABASE = process.env.PGDATABASE || 'openmaptiles';
   const PGHOST = process.env.PGHOST || 'localhost';
   const PGPORT = process.env.PGPORT || '5432';
@@ -18,14 +33,45 @@ describe('PostgreSQL Runner Tests', () => {
   const PGUSER = process.env.PGUSER || 'openmaptiles';
   const PGPASSWORD = process.env.PGPASSWORD || 'openmaptiles';
 
-  const MD5 = 'a8372432b76f55afb7c8b2e820137b30';
-  const QUERY = `SELECT '${dummyTile.toString()}'::bytea as v WHERE $1 >= 0 AND $2 >= 0 AND $3 >= 0`;
-  // eslint-disable-next-line max-len
-  // const QUERY_TEXT = `SELECT '${dummyTile.toString()}'::text as v WHERE $1 >= 0 AND $2 >= 0 AND $3 >= 0`;
-  const QUERY_KEY = `SELECT '${dummyTile.toString()}'::bytea as v, '${MD5}' as k WHERE $1 >= 0 AND $2 >= 0 AND $3 >= 0`;
-  const QUERY_ERR = 'SELECT 0::bytea as v WHERE $1 >= 0 AND $2 >= 0 AND $3 >= 0';
-
   let newRunner = null;
+
+  let vTileLiteral;
+  let vTileGzLiteral;
+  let jpgTileLiteral;
+  let pngTileLiteral;
+
+  let QUERY_ERR;
+
+  before(async () => {
+    const client = new Client({
+      database: PGDATABASE,
+      host: PGHOST,
+      port: PGPORT,
+      user: PGUSER,
+      password: PGPASSWORD,
+    });
+    await client.connect();
+
+    // Ensure that the format of the binary data literal is exactly as PG expects
+    // Send it as a param, get as hex-encoded. Use the decode function as part of the literal value
+    const res = await client.query(
+      'SELECT ' +
+        "encode($1::bytea, 'hex') as a1, " +
+        "encode($2::bytea, 'hex') as a2, " +
+        "encode($3::bytea, 'hex') as a3, " +
+        "encode($4::bytea, 'hex') as a4",
+      [vTile, vTileGz, jpgTile, pngTile]
+    );
+    vTileLiteral = `decode('${res.rows[0].a1}', 'hex')`;
+    vTileGzLiteral = `decode('${res.rows[0].a2}', 'hex')`;
+    jpgTileLiteral = `decode('${res.rows[0].a3}', 'hex')`;
+    pngTileLiteral = `decode('${res.rows[0].a4}', 'hex')`;
+    await client.end();
+  });
+
+  function query(literal, key) {
+    return `SELECT ${literal}::bytea as v${key ? `, '${key}' as k` : ''} WHERE $1 >= 0 AND $2 >= 0 AND $3 >= 0`;
+  }
 
   async function cleanup() {
     if (newRunner) {
@@ -34,9 +80,9 @@ describe('PostgreSQL Runner Tests', () => {
     }
   }
 
-  afterEach(() => cleanup);
+  afterEach(cleanup);
 
-  async function newInstance(query, ...extraParams) {
+  async function newInstance(sql, ...extraParams) {
     await cleanup();
     const creator = promisify((uri, callback) => new PgQuery(uri, callback));
     const queryObj = new URLSearchParams({
@@ -45,7 +91,7 @@ describe('PostgreSQL Runner Tests', () => {
       port: PGPORT,
       username: PGUSER,
       password: PGPASSWORD,
-      query: query || QUERY,
+      query: sql || query(vTileLiteral),
       serverInfo: false,
     });
     if (extraParams) {
@@ -68,11 +114,11 @@ describe('PostgreSQL Runner Tests', () => {
   });
 
   it('server info', async () => {
-    await newInstance(QUERY, {serverInfo: true});
+    await newInstance(query(vTileLiteral), { serverInfo: true });
   });
 
-  it('getTile', async () => {
-    const inst = await newInstance();
+  const assertGetTile = async (sql, expectedData, expectedType, expectedEnc, ...extraParams) => {
+    const inst = await newInstance(sql, ...extraParams);
 
     return new Promise((acc, rej) => {
       inst.getTile(...zxy, (err, data, headers) => {
@@ -80,78 +126,67 @@ describe('PostgreSQL Runner Tests', () => {
           rej(err);
         } else {
           assert.strictEqual(data.constructor.name, 'Buffer');
-          assert.deepStrictEqual(data, zlib.gzipSync(dummyTile));
-          assert.deepStrictEqual(headers, {
-            'Content-Type': 'application/x-protobuf',
-            'Content-Encoding': 'gzip',
-          });
+          assert.deepStrictEqual(data, expectedData);
+          const expectedHeaders = {
+            'Content-Type': expectedType,
+          };
+          if (expectedEnc) {
+            expectedHeaders['Content-Encoding'] = expectedEnc;
+          }
+          assert.deepStrictEqual(headers, expectedHeaders);
           acc();
         }
       });
     });
-  });
+  };
 
-  it('getTile nogzip', async () => {
-    const inst = await newInstance(QUERY, ['nogzip', '1']);
+  it('vector tile', () => assertGetTile(
+    query(vTileLiteral), vTileGz,
+    'application/x-protobuf', 'gzip'
+  ));
+  it('vector tile gz auto', () => assertGetTile(
+    query(vTileGzLiteral), vTileGz,
+    'application/x-protobuf', 'gzip'
+  ));
+  it('vector tile gz gzip=false', () => assertGetTile(
+    query(vTileGzLiteral), vTileGz,
+    'application/x-protobuf', 'gzip',
+    ['gzip', 'false']
+  ));
+  it('vector tile custom headers', () => assertGetTile(
+    query(vTileLiteral), vTileGz,
+    'mycontent', 'myencoding',
+    ['contentType', 'mycontent'],
+    ['contentEncoding', 'myencoding']
+  ));
+  it('vector tile with key auto', () => assertGetTile(
+    query(vTileLiteral, MD5), vTileGzKey,
+    'application/x-protobuf', 'gzip'
+  ));
+  it('vector tile with key', () => assertGetTile(
+    query(vTileLiteral, MD5), vTileGzKey,
+    'application/x-protobuf', 'gzip',
+    ['key', '1']
+  ));
+  it('jpg tile', () => assertGetTile(
+    query(jpgTileLiteral), jpgTile,
+    'image/jpeg', false
+  ));
+  it('jpg tile gzip=false', () => assertGetTile(
+    query(jpgTileLiteral), jpgTile,
+    'image/jpeg', false,
+    ['gzip', 'false']
+  ));
+  it('png tile', () => assertGetTile(
+    query(pngTileLiteral), pngTile,
+    'image/png', false
+  ));
+  it('png tile gzip=false', () => assertGetTile(
+    query(pngTileLiteral), pngTile,
+    'image/png', false,
+    ['gzip', 'false']
+  ));
 
-    return new Promise((acc, rej) => {
-      inst.getTile(...zxy, (err, data, headers) => {
-        if (err) {
-          rej(err);
-        } else {
-          assert.strictEqual(data.constructor.name, 'Buffer');
-          assert.deepStrictEqual(data, dummyTile);
-          assert.deepStrictEqual(headers, {
-            'Content-Type': 'application/x-protobuf',
-            'Content-Encoding': 'gzip',
-          });
-          acc();
-        }
-      });
-    });
-  });
-
-  it('custom headers', async () => {
-    const inst = await newInstance(QUERY, ['contentType', 'mycontent'], ['contentEncoding', 'myencoding']);
-
-    return new Promise((acc, rej) => {
-      inst.getTile(...zxy, (err, data, headers) => {
-        if (err) {
-          rej(err);
-        } else {
-          assert.strictEqual(data.constructor.name, 'Buffer');
-          assert.deepStrictEqual(data, zlib.gzipSync(dummyTile));
-          assert.deepStrictEqual(headers, {
-            'Content-Type': 'mycontent',
-            'Content-Encoding': 'myencoding',
-          });
-          acc();
-        }
-      });
-    });
-  });
-
-  it('getTile with key', async () => {
-    const inst = await newInstance(QUERY_KEY, ['key', '1']);
-
-    return new Promise((acc, rej) => {
-      inst.getTile(...zxy, (err, data, headers) => {
-        if (err) {
-          rej(err);
-        } else {
-          assert.strictEqual(data.constructor.name, 'Buffer');
-          const expected = zlib.gzipSync(dummyTile);
-          expected.key = MD5;
-          assert.deepStrictEqual(data, expected);
-          assert.deepStrictEqual(headers, {
-            'Content-Type': 'application/x-protobuf',
-            'Content-Encoding': 'gzip',
-          });
-          acc();
-        }
-      });
-    });
-  });
 
   it('getTile should error out on invalid z/x/y', async () => {
     const inst = await newInstance();
@@ -172,7 +207,7 @@ describe('PostgreSQL Runner Tests', () => {
   });
 
   it('getTile should properly handle query errors', async () => {
-    const inst = await newInstance(QUERY_ERR, ['testOnStartup', '']);
+    const inst = await newInstance(query(0), ['testOnStartup', ''], ['key', '0'], ['gzip', 'true']);
 
     const testInvalid = (z, x, y) => new Promise((acc, rej) => {
       inst.getTile(z, x, y, (err, data) => {
@@ -249,7 +284,7 @@ describe('PostgreSQL Runner Tests', () => {
   });
 
   it('parseTestOnStartup', async () => {
-    const inst = await newInstance(false, ['testOnStartup', '']);
+    const inst = await newInstance(false, ['testOnStartup', ''], ['key', '0'], ['gzip', 'true']);
     assert.deepStrictEqual([14, 9268, 3575], inst.parseTestOnStartup(undefined));
     assert.deepStrictEqual(false, inst.parseTestOnStartup(''));
     assert.deepStrictEqual(false, inst.parseTestOnStartup('false'));
