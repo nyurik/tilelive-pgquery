@@ -34,7 +34,8 @@ with the first column being the tile data blob. The data blob could be gzip-comp
 * `name` (string) - if set, adds this name to the metadata's name field
 * `key` (boolean) - if set, assumes the second query result column is a key (hash) value that should be attached to the result buffer. By default auto-detects it by looking at the response.
 * `gzip` (boolean) - if set, will gzip-compresses data tile. By default, auto-detects if the server has gzip-compressed data by trying to un-gzip the `testOnStartup` tile. The `nogzip` obsolete parameter will be used if `gzip` is not set, and has the inverse meaning.
-* `contentType` (string) - set `content-type` header. Uses `auto` by default, detecting the tile type by querying `testOnStartup` tile.
+* `contentType` (string) - set `content-type` header. Uses `auto` by default, detecting the tile type by querying `testOnStartup` tile. If the tile content is recognized, content type will be set to one of these values:
+     `application/x-protobuf`, `image/jpeg`, or `image/png`
 * `contentEncoding` (string) - set `content-encoding` header. Uses `auto` by default -- `gzip` for vector tiles, and unset for jpg/png images.
 
 Exactly one of the following 3 parameters must be given.
