@@ -153,6 +153,11 @@ describe('PostgreSQL Runner Tests', () => {
     'application/x-protobuf', 'gzip',
     ['gzip', 'false']
   ));
+  it('vector tile nogzip=1 key=1', () => assertGetTile(
+    query(vTileGzLiteral, MD5), vTileGzKey,
+    'application/x-protobuf', 'gzip',
+    ['nogzip', '1'], ['key', '1']
+  ));
   it('vector tile custom headers', () => assertGetTile(
     query(vTileLiteral), vTileGz,
     'mycontent', 'myencoding',
