@@ -69,8 +69,25 @@ describe('PostgreSQL Runner Tests', () => {
     await client.end();
   });
 
-  function query(literal, key) {
-    return `SELECT ${literal}::bytea as v${key ? `, '${key}' as k` : ''} WHERE $1 >= 0 AND $2 >= 0 AND $3 >= 0`;
+  function query(literal, key, type) {
+    let res = `SELECT ${literal}::bytea as mvt`;
+    if (key) {
+      res += `, '${key}'::text as key`;
+    }
+    switch (type) {
+      case 'funcZXY':
+        return {
+          funcZXY: 'pg_temp.test_mvt',
+          connectionInitQuery: `\
+CREATE FUNCTION pg_temp.test_mvt(zoom integer, x integer, y integer)
+RETURNS TABLE(mvt bytea${key ? ', key text' : ''}) AS $$
+${res} WHERE x >= 0 AND y >= 0 AND zoom >= 0
+$$ LANGUAGE SQL STABLE RETURNS NULL ON NULL INPUT;`,
+        };
+      case 'query':
+      default:
+        return { query: `${res} WHERE $1 >= 0 AND $2 >= 0 AND $3 >= 0` };
+    }
   }
 
   async function cleanup() {
@@ -82,7 +99,7 @@ describe('PostgreSQL Runner Tests', () => {
 
   afterEach(cleanup);
 
-  async function newInstance(sql, ...extraParams) {
+  async function newInstance(params, ...extraParams) {
     await cleanup();
     const creator = promisify((uri, callback) => new PgQuery(uri, callback));
     const queryObj = new URLSearchParams({
@@ -91,14 +108,17 @@ describe('PostgreSQL Runner Tests', () => {
       port: PGPORT,
       username: PGUSER,
       password: PGPASSWORD,
-      query: sql || query(vTileLiteral),
       serverInfo: false,
+      ...(params || query(vTileLiteral)),
     });
     if (extraParams) {
-      for (const v of extraParams) {
-        queryObj.append(v[0], v[1]);
+      for (const vals of extraParams) {
+        for (const k of Object.keys(vals)) {
+          queryObj.append(k, vals[k]);
+        }
       }
     }
+    // noinspection JSCheckFunctionSignatures
     newRunner = await creator(`pgquery://?${queryObj}`);
     return newRunner;
   }
@@ -114,11 +134,11 @@ describe('PostgreSQL Runner Tests', () => {
   });
 
   it('server info', async () => {
-    await newInstance(query(vTileLiteral), { serverInfo: true });
+    await newInstance({ ...query(vTileLiteral), serverInfo: true });
   });
 
-  const assertGetTile = async (sql, expectedData, expectedType, expectedEnc, ...extraParams) => {
-    const inst = await newInstance(sql, ...extraParams);
+  const assertGetTile = async (params, expectedData, expectedType, expectedEnc, ...extraParams) => {
+    const inst = await newInstance(params, ...extraParams);
 
     return new Promise((acc, rej) => {
       inst.getTile(...zxy, (err, data, headers) => {
@@ -140,58 +160,59 @@ describe('PostgreSQL Runner Tests', () => {
     });
   };
 
-  it('vector tile', () => assertGetTile(
-    query(vTileLiteral), vTileGz,
-    'application/x-protobuf', 'gzip'
-  ));
-  it('vector tile gz auto', () => assertGetTile(
-    query(vTileGzLiteral), vTileGz,
-    'application/x-protobuf', 'gzip'
-  ));
-  it('vector tile gz gzip=false', () => assertGetTile(
-    query(vTileGzLiteral), vTileGz,
-    'application/x-protobuf', 'gzip',
-    ['gzip', 'false']
-  ));
-  it('vector tile nogzip=1 key=1', () => assertGetTile(
-    query(vTileGzLiteral, MD5), vTileGzKey,
-    'application/x-protobuf', 'gzip',
-    ['nogzip', '1'], ['key', '1']
-  ));
-  it('vector tile custom headers', () => assertGetTile(
-    query(vTileLiteral), vTileGz,
-    'mycontent', 'myencoding',
-    ['contentType', 'mycontent'],
-    ['contentEncoding', 'myencoding']
-  ));
-  it('vector tile with key auto', () => assertGetTile(
-    query(vTileLiteral, MD5), vTileGzKey,
-    'application/x-protobuf', 'gzip'
-  ));
-  it('vector tile with key', () => assertGetTile(
-    query(vTileLiteral, MD5), vTileGzKey,
-    'application/x-protobuf', 'gzip',
-    ['key', '1']
-  ));
-  it('jpg tile', () => assertGetTile(
-    query(jpgTileLiteral), jpgTile,
-    'image/jpeg', false
-  ));
-  it('jpg tile gzip=false', () => assertGetTile(
-    query(jpgTileLiteral), jpgTile,
-    'image/jpeg', false,
-    ['gzip', 'false']
-  ));
-  it('png tile', () => assertGetTile(
-    query(pngTileLiteral), pngTile,
-    'image/png', false
-  ));
-  it('png tile gzip=false', () => assertGetTile(
-    query(pngTileLiteral), pngTile,
-    'image/png', false,
-    ['gzip', 'false']
-  ));
-
+  for (const testType of ['query', 'funcZXY']) {
+    // eslint-disable-next-line no-loop-func
+    describe(`get tile using ${testType} method`, () => {
+      it('vector tile auto', () => assertGetTile(
+        query(vTileLiteral, false, testType),
+        vTileGz, 'application/x-protobuf', 'gzip'
+      ));
+      it('vector tile gz auto', () => assertGetTile(
+        query(vTileGzLiteral, false, testType),
+        vTileGz, 'application/x-protobuf', 'gzip'
+      ));
+      it('vector tile gz gzip=false', () => assertGetTile(
+        { ...query(vTileGzLiteral, false, testType), gzip: 'false' },
+        vTileGz, 'application/x-protobuf', 'gzip'
+      ));
+      it('vector tile nogzip=1 key=1', () => assertGetTile(
+        { ...query(vTileGzLiteral, MD5, testType), nogzip: 1, key: 1 },
+        vTileGzKey, 'application/x-protobuf', 'gzip'
+      ));
+      it('vector tile custom headers', () => assertGetTile(
+        { ...query(vTileLiteral, false, testType), contentType: 'my-content', contentEncoding: 'my-encoding' },
+        vTileGz, 'my-content', 'my-encoding'
+      ));
+      it('vector tile with key auto', () => assertGetTile(
+        { ...query(vTileLiteral, MD5, testType) },
+        vTileGzKey, 'application/x-protobuf', 'gzip'
+      ));
+      it('vector tile with key', () => assertGetTile(
+        { ...query(vTileLiteral, MD5, testType), key: '1' },
+        vTileGzKey, 'application/x-protobuf', 'gzip'
+      ));
+      it('jpg tile', () => assertGetTile(
+        query(jpgTileLiteral, false, testType),
+        jpgTile, 'image/jpeg', false
+      ));
+      it('jpg tile gzip=false', () => assertGetTile(
+        { ...query(jpgTileLiteral, false, testType), gzip: 'false' },
+        jpgTile, 'image/jpeg', false
+      ));
+      it('png tile', () => assertGetTile(
+        query(pngTileLiteral, false, testType), pngTile,
+        'image/png', false
+      ));
+      it('png tile gzip=false', () => assertGetTile(
+        { ...query(pngTileLiteral, false, testType), gzip: 'false' },
+        pngTile, 'image/png', false
+      ));
+      it('vector tile func', () => assertGetTile(
+        { ...query(pngTileLiteral, false, testType), gzip: 'false' },
+        pngTile, 'image/png', false
+      ));
+    });
+  }
 
   it('getTile should error out on invalid z/x/y', async () => {
     const inst = await newInstance();
@@ -212,7 +233,9 @@ describe('PostgreSQL Runner Tests', () => {
   });
 
   it('getTile should properly handle query errors', async () => {
-    const inst = await newInstance(query(0), ['testOnStartup', ''], ['key', '0'], ['gzip', 'true']);
+    const inst = await newInstance({
+      ...query(0), testOnStartup: '', key: '0', gzip: true,
+    });
 
     const testInvalid = (z, x, y) => new Promise((acc, rej) => {
       inst.getTile(z, x, y, (err, data) => {
@@ -256,7 +279,6 @@ describe('PostgreSQL Runner Tests', () => {
     });
   });
 
-  // noinspection DuplicatedCode
   it('returns something for getInfo()', async () => {
     const inst = await newInstance();
     const getInfo = promisify(inst.getInfo);
@@ -270,26 +292,27 @@ describe('PostgreSQL Runner Tests', () => {
     assert.strictEqual(info.maxzoom, 14);
   });
 
-  // noinspection DuplicatedCode
   it('multi-client', async () => {
-    await newInstance(
-      false,
-      ['host', PGHOST], ['port', PGPORT2]
-    );
+    await newInstance(query(vTileLiteral), { host: PGHOST, port: PGPORT2 });
 
     // FIXME: TODO proper testing for multiple connections
   });
 
   it('resolveDns', async () => {
-    await newInstance(false, ['resolveDns', true]);
+    await newInstance({ ...query(vTileLiteral), resolveDns: true });
   });
 
   it('initQuery', async () => {
-    await newInstance(false, ['initQuery', "SELECT 'CURRENT DB = ' || current_database();"]);
+    await newInstance({ ...query(vTileLiteral), initQuery: "SELECT 'CURRENT DB = ' || current_database();" });
   });
 
   it('parseTestOnStartup', async () => {
-    const inst = await newInstance(false, ['testOnStartup', ''], ['key', '0'], ['gzip', 'true']);
+    const inst = await newInstance({
+      ...query(vTileLiteral),
+      testOnStartup: '',
+      key: '0',
+      gzip: 'true',
+    });
     assert.deepStrictEqual([14, 9268, 3575], inst.parseTestOnStartup(undefined));
     assert.deepStrictEqual(false, inst.parseTestOnStartup(''));
     assert.deepStrictEqual(false, inst.parseTestOnStartup('false'));
@@ -300,3 +323,4 @@ describe('PostgreSQL Runner Tests', () => {
     assert.deepStrictEqual([3, 2, 1], inst.parseTestOnStartup('3/2/1'));
   });
 });
+

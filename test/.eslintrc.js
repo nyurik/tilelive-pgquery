@@ -1,6 +1,9 @@
 module.exports = {
-  'env': {
-    'mocha': true
+  env: {
+    mocha: true,
+  },
+  parserOptions: {
+    ecmaVersion: 11,
   },
   rules: {
     // It is okay to import devDependencies in tests.
