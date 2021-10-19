@@ -9,7 +9,7 @@
   ],
   "main": "lib/PgQuery.js",
   "scripts": {
-    "docker-build": "docker build . --tag nyurik/${npm_package_name}:${npm_package_version}",
+    "docker-build": "docker build --build-arg PGQUERY_VERSION=${npm_package_version} --tag nyurik/${npm_package_name}:${npm_package_version} .",
     "docker-publish": "npm run docker-build && docker push nyurik/${npm_package_name}:${npm_package_version}",
     "test": "mocha --exit",
     "test-watch": "mocha --watch",
