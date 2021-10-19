@@ -109,6 +109,7 @@ $$ LANGUAGE SQL STABLE RETURNS NULL ON NULL INPUT;`,
       username: PGUSER,
       password: PGPASSWORD,
       serverInfo: false,
+      specInfo: false,
       ...(params || query(vTileLiteral)),
     });
     if (extraParams) {
@@ -135,6 +136,10 @@ $$ LANGUAGE SQL STABLE RETURNS NULL ON NULL INPUT;`,
 
   it('server info', async () => {
     await newInstance({ ...query(vTileLiteral), serverInfo: true });
+  });
+
+  it('source info', async () => {
+    await newInstance({ ...query(vTileLiteral), specInfo: true });
   });
 
   const assertGetTile = async (params, expectedData, expectedType, expectedEnc, ...extraParams) => {
