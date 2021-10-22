@@ -312,12 +312,13 @@ $$ LANGUAGE SQL STABLE RETURNS NULL ON NULL INPUT;`,
   });
 
   it('parseTestOnStartup', async () => {
-    const inst = await newInstance({
+    const instanceParams = {
       ...query(vTileLiteral),
       testOnStartup: '',
       key: '0',
       gzip: 'true',
-    });
+    };
+    let inst = await newInstance(instanceParams);
     assert.deepStrictEqual([14, 9268, 3575], inst.parseTestOnStartup(undefined));
     assert.deepStrictEqual(false, inst.parseTestOnStartup(''));
     assert.deepStrictEqual(false, inst.parseTestOnStartup('false'));
@@ -326,6 +327,19 @@ $$ LANGUAGE SQL STABLE RETURNS NULL ON NULL INPUT;`,
     assert.deepStrictEqual([0, 0, 0], inst.parseTestOnStartup('0/0/0'));
     assert.deepStrictEqual([3, 2, 1], inst.parseTestOnStartup('3,2,1'));
     assert.deepStrictEqual([3, 2, 1], inst.parseTestOnStartup('3/2/1'));
+
+    inst = await newInstance({
+      ...instanceParams,
+      maxzoom: '10',
+    });
+    assert.deepStrictEqual([10, 579, 223], inst.parseTestOnStartup(undefined));
+
+    inst = await newInstance({
+      ...instanceParams,
+      minzoom: '15',
+      maxzoom: '16',
+    });
+    assert.deepStrictEqual([15, 18536, 7150], inst.parseTestOnStartup(undefined));
   });
 });
 
