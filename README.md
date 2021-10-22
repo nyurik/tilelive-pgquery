@@ -25,7 +25,7 @@ with the first column being the tile data blob. The data blob could be gzip-comp
 * `maxpool` (integer) - size of the per-server connection pool (default=10). If given, must be used once or the same number of times as there are hosts.
 * `minzoom` (zoom) - minimum allowed zoom (default=0)
 * `maxzoom` (zoom) - maximum allowed zoom (default=22)
-* `testOnStartup` (tile index) - set which tile (in z/x/y or z,x,y format) to get on startup to verify database connection.  By default, uses a simple tile in Norway on zoom 10.
+* `testOnStartup` (tile index) - set which tile (in z/x/y or z,x,y format) to get on startup to verify database connection.  By default, uses a simple tile in Norway on zoom 14. The default test tile will be adjusted depending on minzoom/maxzoom.
 * `serverInfo` (boolean) - if non-empty or not given, prints PostgreSQL & PostGIS version data and key metrics. To disable, set to an empty value.
 * `specInfo` (boolean) - if non-empty or not given, prints [tilejson spec](https://github.com/mapbox/tilejson-spec) data. To disable, set to an empty value.
 * `prepareStatement` (boolean) - use prepared statements (defaults to `false` for funcZXY and query, `true` for `queryFile`).
