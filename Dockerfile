@@ -1,4 +1,4 @@
-FROM node:16
+FROM node:19
 LABEL maintainer="Yuri Astrakhan <YuriAstrakhan@gmail.com>"
 
 WORKDIR /usr/src/app
