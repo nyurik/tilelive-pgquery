@@ -29,7 +29,7 @@ describe('PostgreSQL Runner Tests', () => {
   const PGDATABASE = process.env.PGDATABASE || 'openmaptiles';
   const PGHOST = process.env.PGHOST || 'localhost';
   const PGPORT = process.env.PGPORT || '5432';
-  const PGPORT2 = process.env.PGPORT2 || '5433';
+  const PGPORT2 = process.env.PGPORT2 || '5434';
   const PGUSER = process.env.PGUSER || 'openmaptiles';
   const PGPASSWORD = process.env.PGPASSWORD || 'openmaptiles';
 
@@ -342,4 +342,3 @@ $$ LANGUAGE SQL STABLE RETURNS NULL ON NULL INPUT;`,
     assert.deepStrictEqual([15, 18536, 7150], inst.parseTestOnStartup(undefined));
   });
 });
-

@@ -38,6 +38,7 @@ with the first column being the tile data blob. The data blob could be gzip-comp
 * `contentType` (string) - set `content-type` header. Uses `auto` by default, detecting the tile type by querying `testOnStartup` tile. If the tile content is recognized, content type will be set to one of these values:
      `application/x-protobuf`, `image/jpeg`, or `image/png`
 * `contentEncoding` (string) - set `content-encoding` header. Uses `auto` by default -- `gzip` for vector tiles, and unset for jpg/png images.
+* `ssl` (boolean) - if set, use SSL connection to the server.
 
 Exactly one of the following 3 parameters must be given.
 * `funcZXY` (string) - name of the function that accepts the `Z, X, Y` int parameters.
@@ -51,7 +52,7 @@ Testing requires a local PostgreSQL service, even if it is empty and runs inside
 docker run -it --rm --name pg-docker -e POSTGRES_PASSWORD=openmaptiles -e POSTGRES_USER=openmaptiles -e POSTGRES_DB=openmaptiles -p 5432:5432 postgres
 
 # For multi-host test, run another instance on a different port
-docker run -it --rm --name pg-docker2 -e POSTGRES_PASSWORD=openmaptiles -e POSTGRES_USER=openmaptiles -e POSTGRES_DB=openmaptiles -p 5433:5432 postgres
+docker run -it --rm --name pg-docker2 -e POSTGRES_PASSWORD=openmaptiles -e POSTGRES_USER=openmaptiles -e POSTGRES_DB=openmaptiles -p 5434:5432 postgres
 ```
 
 Run tests in a separate shell using `yarn run test`
