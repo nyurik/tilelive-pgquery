@@ -303,6 +303,13 @@ $$ LANGUAGE SQL STABLE RETURNS NULL ON NULL INPUT;`,
     // FIXME: TODO proper testing for multiple connections
   });
 
+  it('conn-str-params', async () => {
+    const inst = await newInstance({ ...query(vTileLiteral), connStrParams: 'sslmode=disable' });
+    const getInfo = promisify(inst.getInfo);
+    const info = await getInfo.apply(inst);
+    assert(info);
+  });
+
   it('resolveDns', async () => {
     await newInstance({ ...query(vTileLiteral), resolveDns: true });
   });

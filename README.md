@@ -38,7 +38,7 @@ with the first column being the tile data blob. The data blob could be gzip-comp
 * `contentType` (string) - set `content-type` header. Uses `auto` by default, detecting the tile type by querying `testOnStartup` tile. If the tile content is recognized, content type will be set to one of these values:
      `application/x-protobuf`, `image/jpeg`, or `image/png`
 * `contentEncoding` (string) - set `content-encoding` header. Uses `auto` by default -- `gzip` for vector tiles, and unset for jpg/png images.
-* `ssl` (boolean) - if set, use SSL connection to the server.
+* `connStrParams` (string) - if set, specifies any additional URL-like params to pass to the postgres connection string, separated by the `&`.  For example, `sslmode=disable` will disable SSL.
 
 Exactly one of the following 3 parameters must be given.
 * `funcZXY` (string) - name of the function that accepts the `Z, X, Y` int parameters.
