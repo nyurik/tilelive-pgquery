@@ -1,6 +1,6 @@
 {
   "name": "tilelive-pgquery",
-  "version": "1.4.1",
+  "version": "1.5.0-next.0",
   "description": "PostgreSQL tilelive tile generator that runs an MVT-returning query and can load-balance between multiple PG servers",
   "keywords": [
     "postgres",
